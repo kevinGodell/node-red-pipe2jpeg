@@ -1,0 +1,146 @@
+<script type="text/javascript">
+  RED.nodes.registerType('pipe2jpeg', {
+    align: 'left',
+    category: 'cctv',
+    color: '#DEBD5C',
+    defaults: {
+      name: { value: '' },
+      basePath: {
+        value: 'id',
+        required: true,
+        validate: RED.validators.regex(/^[a-z\d_.]{1,50}$/i),
+      },
+      serveHttp: {
+        value: 'true',
+        required: true,
+        validate: function (serveHttp) {
+          return ['true', 'false'].includes(serveHttp);
+        },
+      },
+      bufferType: {
+        value: 'array',
+        required: true,
+        validate: function (bufferType) {
+          return ['array', 'concat'].includes(bufferType);
+        },
+      },
+    },
+    icon: 'font-awesome/fa-file-image-o',
+    inputLabels: 'buffer',
+    inputs: 1,
+    label: function () {
+      if (this.name) {
+        return this.name;
+      }
+
+      if (this.basePath === 'id') {
+        return `/pipe2jpeg/${this.id}`;
+      }
+
+      if (this.valid || (Array.isArray(this.validationErrors) && !this.validationErrors.includes('basePath'))) {
+        return `/pipe2jpeg/${this.basePath}`;
+      }
+
+      return this.type;
+    },
+    outputLabels: function (index) {
+      switch (index) {
+        case 0:
+          return 'playlist';
+        case 1:
+          return this.bufferType;
+        default:
+          return '';
+      }
+    },
+    outputs: 2,
+    oneditprepare: function () {
+      const basePath = $('#node-input-basePath');
+
+      basePath.prop('placeholder', this.id);
+
+      basePath.on('input', () => {
+        const val = basePath.val();
+
+        const replace = val.replace(/[^a-z\d_.]/gi, '');
+
+        basePath.val(replace);
+      });
+
+      if (basePath.val() === '') {
+        basePath.val(this.id);
+      }
+
+      const serveHttp = $('#node-input-serveHttp').typedInput({
+        type: 'bool',
+        types: [
+          {
+            value: 'bool',
+            //icon: 'fa fa-list-ol',
+            options: ['false', 'true'],
+          },
+        ],
+      });
+
+      const bufferType = $('#node-input-bufferType').typedInput({
+        type: 'str',
+        types: [
+          {
+            value: 'str',
+            //icon: 'fa fa-list-ol',
+            options: [
+              { value: 'array', label: 'array of buffers' },
+              { value: 'concat', label: 'concatenated buffer' },
+              //{ value: 'none', label: 'none'},
+            ],
+          },
+        ],
+      });
+    },
+    oneditsave: function () {
+      const basePath = $('#node-input-basePath');
+
+      if (basePath.val() === '') {
+        basePath.val(this.id);
+      }
+    },
+  });
+</script>
+
+<script data-template-name="pipe2jpeg" type="text/html">
+  <div class="form-row">
+    <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+    <input type="text" id="node-input-name" placeholder="Name" />
+  </div>
+
+  <fieldset>
+    <legend>External Api</legend>
+
+    <p class="form-tips">Unique value used for topics and http routes.</p>
+
+    <div class="form-row">
+      <label for="node-input-basePath"><i class="fa fa-globe"></i> Base Path</label>
+      <label for="node-input-basePath" style="width:auto;"><code>/pipe2jpeg/</code></label>
+      <input style="width:auto; max-width: 120px; text-align:center;" type="text" id="node-input-basePath" />
+      <label for="node-input-basePath" style="width:auto;"><code>/{resource}</code></label>
+    </div>
+
+    <p class="form-tips">Serve http routes for image.jpeg and video.mjpeg.</p>
+
+    <div class="form-row">
+      <label for="node-input-serveHttp"><i class="fa fa-gears"></i> Serve Http</label>
+      <input id="node-input-serveHttp" />
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Buffer Output</legend>
+
+    <p class="form-tips">Output jpeg as concatenated buffer or array of buffers.</p>
+
+    <div class="form-row">
+      <label for="node-input-bufferType"><i class="fa fa-gears"></i> Buffer Type</label>
+      <input id="node-input-bufferType" />
+    </div>
+  </fieldset>
+</script>

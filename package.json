@@ -1,0 +1,64 @@
+{
+  "name": "@kevingodell/node-red-pipe2jpeg",
+  "version": "0.1.0",
+  "description": "Parse a jpeg from a buffer and send it to a downstream node or serve it via http.",
+  "main": "pipe2jpeg.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "pack": "npm pack",
+    "pretty": "./node_modules/.bin/prettier --write **/*.html",
+    "lint": "./node_modules/.bin/eslint --fix --ext .js --ignore-path .gitignore .",
+    "clean": "npm run lint && npm run pretty",
+    "beta": "npm version prerelease --preid=beta"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kevinGodell/node-red-pipe2jpeg.git"
+  },
+  "keywords": [
+    "buffer",
+    "jpeg",
+    "mjpeg",
+    "parser",
+    "ffmpeg",
+    "video",
+    "cctv"
+  ],
+  "author": "Kevin Godell <kevin.godell@gmail.com> (https://github.com/kevinGodell)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/kevinGodell/node-red-pipe2jpeg/issues"
+  },
+  "homepage": "https://github.com/kevinGodell/node-red-pipe2jpeg#readme",
+  "devDependencies": {
+    "eslint": "^8.30.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "prettier": "^2.8.1"
+  },
+  "peerDependencies": {
+    "express": ">=4"
+  },
+  "peerDependenciesMeta": {
+    "express": {
+      "optional": false
+    }
+  },
+  "dependencies": {
+    "pipe2jpeg": "^0.4.0"
+  },
+  "files": [
+    "pipe2jpeg.html",
+    "locales",
+    "examples"
+  ],
+  "node-red": {
+    "version": ">=3.0.2",
+    "nodes": {
+      "pipe2jpeg": "pipe2jpeg.js"
+    }
+  },
+  "engines": {
+    "node": ">=14"
+  }
+}
