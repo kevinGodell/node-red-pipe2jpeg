@@ -1,0 +1,173 @@
+[
+  {
+    "id": "6fa86982c593c6a4",
+    "type": "exec",
+    "z": "3352d78ab5eab950",
+    "command": "ffmpeg -loglevel +level+error -hide_banner -nostats -re -f lavfi -i testsrc=size=qcif:rate=1 -f image2pipe -c mjpeg -t 00:02:00 pipe:1",
+    "addpay": "",
+    "append": "",
+    "useSpawn": "true",
+    "timer": "",
+    "winHide": false,
+    "oldrc": false,
+    "name": "ffmpeg",
+    "x": 320,
+    "y": 380,
+    "wires": [
+      [
+        "f40dcd03436f62c8"
+      ],
+      [
+        "99f1c5ce4ad55e2d"
+      ],
+      [
+        "f40dcd03436f62c8"
+      ]
+    ]
+  },
+  {
+    "id": "47c260c1db5d4246",
+    "type": "inject",
+    "z": "3352d78ab5eab950",
+    "name": "start",
+    "props": [],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "x": 110,
+    "y": 340,
+    "wires": [
+      [
+        "6fa86982c593c6a4"
+      ]
+    ]
+  },
+  {
+    "id": "84b760d1056c01d7",
+    "type": "inject",
+    "z": "3352d78ab5eab950",
+    "name": "stop",
+    "props": [
+      {
+        "p": "kill",
+        "v": "SIGKILL",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "x": 110,
+    "y": 400,
+    "wires": [
+      [
+        "6fa86982c593c6a4"
+      ]
+    ]
+  },
+  {
+    "id": "99f1c5ce4ad55e2d",
+    "type": "debug",
+    "z": "3352d78ab5eab950",
+    "name": "stderr",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "true",
+    "targetType": "full",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 530,
+    "y": 400,
+    "wires": []
+  },
+  {
+    "id": "9791b64b08ee3860",
+    "type": "debug",
+    "z": "3352d78ab5eab950",
+    "name": "playlist",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": true,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "status",
+    "statusType": "msg",
+    "x": 820,
+    "y": 340,
+    "wires": []
+  },
+  {
+    "id": "72ab24ddeafb3932",
+    "type": "comment",
+    "z": "3352d78ab5eab950",
+    "name": "FFMPEG IS NOT INCLUDED WITH THIS NODE. IT MUST BE INSTALLED SEPARATELY.",
+    "info": "",
+    "x": 340,
+    "y": 60,
+    "wires": []
+  },
+  {
+    "id": "49e3685ce732add7",
+    "type": "comment",
+    "z": "3352d78ab5eab950",
+    "name": "ENOENT error indicates that ffmpeg is not installed or its path is incorrect.",
+    "info": "",
+    "x": 300,
+    "y": 140,
+    "wires": []
+  },
+  {
+    "id": "a5eeaff1fdeca1ae",
+    "type": "comment",
+    "z": "3352d78ab5eab950",
+    "name": "The correct video codec and format must be set when generating jpeg images.",
+    "info": "",
+    "x": 320,
+    "y": 100,
+    "wires": []
+  },
+  {
+    "id": "cf49c44d3d73fd48",
+    "type": "comment",
+    "z": "3352d78ab5eab950",
+    "name": "For help, publicly tag me in the Node-RED forum @kevinGodell.",
+    "info": "`@kevinGodell`",
+    "x": 270,
+    "y": 180,
+    "wires": []
+  },
+  {
+    "id": "f91f0f4bcf42e8be",
+    "type": "comment",
+    "z": "3352d78ab5eab950",
+    "name": "Create sample jpeg images using exec node.",
+    "info": "",
+    "x": 210,
+    "y": 280,
+    "wires": []
+  },
+  {
+    "id": "f40dcd03436f62c8",
+    "type": "pipe2jpeg",
+    "z": "3352d78ab5eab950",
+    "name": "",
+    "basePath": "flow01",
+    "serveHttp": "true",
+    "bufferType": "array",
+    "x": 570,
+    "y": 340,
+    "wires": [
+      [
+        "9791b64b08ee3860"
+      ],
+      []
+    ]
+  }
+]
