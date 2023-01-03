@@ -35,9 +35,9 @@ node-red-stop && node-red-start
 * See the detailed help text in the sidebar.
 
 ### Screenshots:
-<img width="500" alt="flow" src="">
-<img width="500" alt="properties" src="">
-<img width="500" alt="help" src="">
+<img width="500" alt="flow" src="https://user-images.githubusercontent.com/6091746/210290124-60aa11d6-40d6-4ea9-88e0-deda3177380c.png">
+<img width="500" alt="properties" src="https://user-images.githubusercontent.com/6091746/210290159-d53fd0ad-64cb-4151-8d54-140b43f8342c.png">
+<img width="500" alt="help" src="https://user-images.githubusercontent.com/6091746/210290168-696e38c2-7cb9-487b-8139-e73cb070544e.png">
 
 ### Flows:
 https://github.com/kevinGodell/node-red-pipe2jpeg/tree/master/examples
