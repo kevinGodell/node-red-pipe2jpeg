@@ -38,7 +38,7 @@ module.exports = RED => {
 
         this.createPipe2jpeg();
 
-        this.createHttpRoute();
+        this.createHttpRoute(); // throws
 
         this.on('input', this.onInput);
 
@@ -72,11 +72,10 @@ module.exports = RED => {
       this.topic = {
         status: `pipe2jpeg/${this.basePath}/status`,
         buffer: {
-          jpeg: `pipe2jpeg/${this.basePath}/buffer/jpeg`,
+          // jpeg: `pipe2jpeg/${this.basePath}/buffer/jpeg`,
+          array: `pipe2jpeg/${this.basePath}/buffer/array`,
+          concat: `pipe2jpeg/${this.basePath}/buffer/concat`,
         },
-        // todo might include concat or array info
-        // pipe2jpeg/${this.basePath}/concat/jpeg
-        // pipe2jpeg/${this.basePath}/array/jpeg
       };
     }
 
@@ -113,12 +112,14 @@ module.exports = RED => {
 
       this.pipe2jpeg.prependOnceListener('data', handleFirstJpeg);
 
-      const topic = this.topic.buffer.jpeg;
+      // const topic = this.topic.buffer.jpeg;
 
       const retain = false;
 
       const onData = (() => {
         if (this.bufferType === 'concat') {
+          const topic = this.topic.buffer.concat;
+
           return ({ jpeg }) => {
             if (this.resWaitingForMjpeg && this.resWaitingForMjpeg.size > 0) {
               this.resWaitingForMjpeg.forEach(res => {
@@ -135,6 +136,8 @@ module.exports = RED => {
             this.send([null, { _msgid: this._msgid, topic, retain, payload: jpeg }]);
           };
         } else {
+          const topic = this.topic.buffer.array;
+
           return ({ list, totalLength }) => {
             if (this.resWaitingForMjpeg && this.resWaitingForMjpeg.size > 0) {
               this.resWaitingForMjpeg.forEach(res => {
@@ -211,9 +214,10 @@ module.exports = RED => {
         Pipe2jpegNode.httpRouter.pipe2jpegRouter = true;
 
         Pipe2jpegNode.httpRouter.use((req, res, next) => {
+          // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control#cache_directives
           res.set('Cache-Control', 'no-store');
 
-          // needed for safari
+          // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Vary#directives
           res.set('Vary', '*');
 
           // overwrite X-Powered-By Express header

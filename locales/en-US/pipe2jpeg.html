@@ -4,5 +4,108 @@
     <li>jpeg image path: <b>/pipe2jpeg/<code>{basePath}</code>/image.jpeg</b></li>
     <li>mjpeg video path: <b>/pipe2jpeg/<code>{basePath}</code>/video.mjpeg</b></li>
   </ul>
-  <p>more docs coming soon...</p>
+
+  <h3>Inputs</h3>
+  <ul>
+    <li>
+      <h4>Buffer: jpeg images</h4>
+      <ul>
+        <li>must be continuous pieces from 1 or more jpeg images</li>
+        <li>
+          send an input <code>msg</code> structured as:
+          <pre class="form-tips" style="min-width: 450px"><code>
+{
+  payload: &lt;Buffer&gt;
+}
+          </code></pre>
+        </li>
+      </ul>
+    </li>
+  </ul>
+
+  <h3>Outputs</h3>
+  <ul>
+    <li>
+      <h4>Status</h4>
+      <ul>
+        <li>output is a playlist containing http paths</li>
+        <li>
+          sends an output <code>msg</code> structured as:
+          <pre class="form-tips" style="min-width: 450px"><code>
+{
+  topic: 'pipe2jpeg/front_porch_sub/status',
+  status: 'playlist',
+  payload: {
+    jpegImage: '/pipe2jpeg/office_sub/image.jpeg',
+    mjpegVideo: '/pipe2jpeg/office_sub/video.mjpeg',
+  }
+}
+          </code></pre>
+        </li>
+      </ul>
+    </li>
+    <li>
+      <h4>Buffer</h4>
+      <ul>
+        <li>the buffer output will send jpeg images</li>
+        <li>
+          depending on the buffer type setting, the output will be different:
+          <ol>
+            <li>
+              buffer type concat <code>msg</code>s are structured as:
+              <pre class="form-tips" style="min-width: 450px"><code>
+{
+  topic: '/pipe2jpeg/office_sub/buffer/concat',
+  retain: false,
+  payload: buffer[90222]
+}
+              </code></pre>
+            </li>
+            <li>
+              buffer type array <code>msg</code>s are structured as:
+              <pre class="form-tips" style="min-width: 450px"><code>
+{
+  topic: '/pipe2jpeg/office_sub/buffer/array',
+  retain: false,
+  payload: [buffer[65536], buffer[24686]]
+  totalSize: 90222
+}
+              </code></pre>
+            </li>
+          </ol>
+        </li>
+      </ul>
+    </li>
+  </ul>
+
+  <h3>Properties</h3>
+  <ul>
+    <li>
+      <h4>External API</h4>
+      <ul>
+        <li>
+          <h5>Base Path</h5>
+          <ul>
+            <li>must be a unique value</li>
+            <li>set value to 'id' to use node's id</li>
+            <li>used for http routes</li>
+            <li>used for topics</li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+    <li>
+      <h4>Buffer Output</h4>
+      <ul>
+        <li>
+          <h5>Buffer Type</h5>
+          <ul>
+            <li>concat or array</li>
+            <li>concat causes array of buffers to be concatenated to a single buffer</li>
+            <li>array prevents concatenation and uses less resources</li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
 </script>

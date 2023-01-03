@@ -1,5 +1,7 @@
 # @kevingodell/node-red-pipe2jpeg
+
 ######
+[![Buy me a coffee](https://img.shields.io/badge/-buy%20me%20a%20coffee-red?logo=buy%20me%20a%20coffee)](https://buymeacoffee.com/kevinGodell)
 [![GitHub license](https://img.shields.io/badge/license-MIT-brightgreen.svg)](https://raw.githubusercontent.com/kevinGodell/node-red-pipe2jpeg/master/LICENSE)
 [![npm](https://img.shields.io/npm/dt/@kevingodell/node-red-pipe2jpeg.svg?style=flat-square)](https://www.npmjs.com/package/@kevingodell/node-red-pipe2jpeg)
 [![GitHub issues](https://img.shields.io/github/issues/kevinGodell/node-red-pipe2jpeg.svg)](https://github.com/kevinGodell/node-red-pipe2jpeg/issues)

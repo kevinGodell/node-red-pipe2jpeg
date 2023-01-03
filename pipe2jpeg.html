@@ -71,16 +71,7 @@
         basePath.val(this.id);
       }
 
-      const serveHttp = $('#node-input-serveHttp').typedInput({
-        type: 'bool',
-        types: [
-          {
-            value: 'bool',
-            //icon: 'fa fa-list-ol',
-            options: ['false', 'true'],
-          },
-        ],
-      });
+      const serveHttp = $('#node-input-serveHttp').typedInput({ type: 'bool', types: ['bool'] });
 
       const bufferType = $('#node-input-bufferType').typedInput({
         type: 'str',
