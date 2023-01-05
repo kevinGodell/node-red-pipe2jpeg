@@ -102,7 +102,7 @@ module.exports = RED => {
             mjpegVideo: this.mjpegVideoPath,
           };
 
-          this.send({ _msgid: this._msgid, topic: this.topic.status, status: 'playlist', payload: this.playlist });
+          this.send({ _msgid: this._msgid, topic: this.topic.status, retain: true, status: 'playlist', payload: this.playlist });
         }
 
         this.displayedStatus.fill = 'green';
@@ -112,19 +112,17 @@ module.exports = RED => {
 
       this.pipe2jpeg.prependOnceListener('data', handleFirstJpeg);
 
-      // const topic = this.topic.buffer.jpeg;
-
-      const retain = false;
-
       const onData = (() => {
+        const retain = true;
+
         if (this.bufferType === 'concat') {
           const topic = this.topic.buffer.concat;
 
-          return ({ jpeg }) => {
+          return ({ jpeg, totalLength }) => {
             if (this.resWaitingForMjpeg && this.resWaitingForMjpeg.size > 0) {
               this.resWaitingForMjpeg.forEach(res => {
                 if (res.writableEnded === false || res.finished === false) {
-                  res.write(`Content-Type: image/jpeg\r\nContent-Length: ${jpeg.length}\r\n\r\n`);
+                  res.write(`Content-Type: image/jpeg\r\nContent-Length: ${totalLength}\r\n\r\n`);
 
                   res.write(jpeg);
 
@@ -133,7 +131,7 @@ module.exports = RED => {
               });
             }
 
-            this.send([null, { _msgid: this._msgid, topic, retain, payload: jpeg }]);
+            this.send([null, { _msgid: this._msgid, topic, retain, payload: jpeg, totalLength }]);
           };
         } else {
           const topic = this.topic.buffer.array;
@@ -184,7 +182,7 @@ module.exports = RED => {
         if (this.playlist) {
           this.playlist = '';
 
-          this.send({ _msgid: this._msgid, topic: this.topic.status, status: 'reset', payload: this.playlist });
+          this.send({ _msgid: this._msgid, topic: this.topic.status, retain: true, status: 'reset', payload: this.playlist });
         }
 
         this.displayedStatus.fill = 'yellow';
@@ -253,10 +251,6 @@ module.exports = RED => {
               if (value && value.type === 'Buffer') {
                 return `<Buffer ${value.data.length}>`;
               }
-
-              /* if (key === 'm3u8' && typeof value === 'string') {
-                return value.split('\n').slice(0, -1);
-              }*/
 
               return value;
             },
@@ -515,6 +509,13 @@ Pipe2jpeg.prototype.toJSON = function () {
     list: this.list,
     totalLength: this.totalLength,
     timestamp: this.timestamp,
-    byteOffset: this.byteOffset,
   };
+};
+
+Pipe2jpeg.prototype._sendJpegBufferObject = function () {
+  this._jpeg = this._buffers.length > 1 ? Buffer.concat(this._buffers, this._size) : this._buffers[0];
+
+  this._totalLength = this._size;
+
+  this.emit('data', { jpeg: this._jpeg, totalLength: this._totalLength });
 };
