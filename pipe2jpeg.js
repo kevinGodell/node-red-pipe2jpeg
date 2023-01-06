@@ -71,11 +71,7 @@ module.exports = RED => {
 
       this.topic = {
         status: `pipe2jpeg/${this.basePath}/status`,
-        buffer: {
-          // jpeg: `pipe2jpeg/${this.basePath}/buffer/jpeg`,
-          array: `pipe2jpeg/${this.basePath}/buffer/array`,
-          concat: `pipe2jpeg/${this.basePath}/buffer/concat`,
-        },
+        buffer: `pipe2jpeg/${this.basePath}/buffer/${this.bufferType}`,
       };
     }
 
@@ -112,54 +108,30 @@ module.exports = RED => {
 
       this.pipe2jpeg.prependOnceListener('data', handleFirstJpeg);
 
-      const onData = (() => {
-        const retain = true;
+      const retain = true;
 
+      const topic = this.topic.buffer;
+
+      const getPayload = (() => {
         if (this.bufferType === 'concat') {
-          const topic = this.topic.buffer.concat;
-
-          return ({ jpeg, totalLength }) => {
-            if (this.resWaitingForMjpeg && this.resWaitingForMjpeg.size > 0) {
-              this.resWaitingForMjpeg.forEach(res => {
-                if (res.writableEnded === false || res.finished === false) {
-                  res.write(`Content-Type: image/jpeg\r\nContent-Length: ${totalLength}\r\n\r\n`);
-
-                  res.write(jpeg);
-
-                  res.write('\r\n--pipe2jpeg\r\n');
-                }
-              });
-            }
-
-            this.send([null, { _msgid: this._msgid, topic, retain, payload: jpeg, totalLength }]);
+          return data => {
+            return { payload: data.jpeg, totalLength: data.totalLength };
           };
         } else {
-          const topic = this.topic.buffer.array;
-
-          return ({ list, totalLength }) => {
-            if (this.resWaitingForMjpeg && this.resWaitingForMjpeg.size > 0) {
-              this.resWaitingForMjpeg.forEach(res => {
-                if (res.writableEnded === false || res.finished === false) {
-                  res.write(`Content-Type: image/jpeg\r\nContent-Length: ${totalLength}\r\n\r\n`);
-
-                  list.forEach(buffer => {
-                    res.write(buffer);
-                  });
-
-                  res.write('\r\n--pipe2jpeg\r\n');
-                }
-              });
-            }
-
-            this.send([null, { _msgid: this._msgid, topic, retain, payload: list, totalLength }]);
+          return data => {
+            return { payload: data.list, totalLength: data.totalLength };
           };
         }
       })();
 
-      this.pipe2jpeg.on('data', onData);
+      this.pipe2jpeg.on('data', data => {
+        const { payload, totalLength } = getPayload(data);
+
+        this.send([null, { _msgid: this._msgid, topic, retain, payload, totalLength }]);
+      });
 
       this.pipe2jpeg.on('error', error => {
-        this.pipe2jpeg.resetCacheEmit();
+        this.pipe2jpeg.resetCache();
 
         this.error(error);
 
@@ -200,7 +172,7 @@ module.exports = RED => {
 
       this.pipe2jpeg.removeAllListeners('reset');
 
-      this.pipe2jpeg.resetCacheEmit();
+      this.pipe2jpeg.resetCache();
 
       this.pipe2jpeg = undefined;
     }
@@ -271,100 +243,82 @@ module.exports = RED => {
         this.resWaitingForMjpeg = new Set();
 
         httpRouter.use((req, res, next) => {
-          if (this.pipe2jpeg instanceof Pipe2jpeg) {
+          if (this.pipe2jpeg instanceof Pipe2jpeg && this.pipe2jpeg.totalLength) {
             return next();
           }
 
-          return res.status(404).send(_('pipe2jpeg.error.pipe2jpeg_not_found', { basePath: this.basePath }));
+          return res.status(404).send(_('pipe2jpeg.error.jpeg_data_not_found', { basePath: this.basePath }));
         });
 
-        const [getImage, getVideo] = (() => {
+        const [getPayload, writePayload] = (() => {
           if (this.bufferType === 'concat') {
             return [
-              (req, res) => {
-                const { jpeg } = this.pipe2jpeg;
-
-                if (jpeg) {
-                  res.type('jpeg');
-
-                  return res.send(jpeg);
-                }
-
-                res.status(404).send(_('pipe2jpeg.error.jpeg_image_not_found', { basePath: this.basePath }));
+              data => {
+                return { payload: data.jpeg, totalLength: data.totalLength };
               },
-              (req, res) => {
-                const { jpeg } = this.pipe2jpeg;
-
-                if (jpeg) {
-                  res.set('Content-Type', 'multipart/x-mixed-replace;boundary=pipe2jpeg');
-
-                  // res.write('--pipe2jpeg\r\n');
-
-                  res.write(`Content-Type: image/jpeg\r\nContent-Length: ${jpeg.length}\r\n\r\n`);
-
-                  res.write(jpeg);
-
-                  res.write('\r\n--pipe2jpeg\r\n');
-
-                  this.resWaitingForMjpeg.add(res);
-
-                  return res.once('close', () => {
-                    this.resWaitingForMjpeg instanceof Set && this.resWaitingForMjpeg.delete(res);
-
-                    res.end();
-                  });
-                }
-
-                return res.status(404).send(_('pipe2jpeg.error.mjpeg_video_not_found', { basePath: this.basePath }));
+              (res, payload) => {
+                res.write(payload);
               },
             ];
           } else {
             return [
-              (req, res) => {
-                const { list } = this.pipe2jpeg;
-
-                if (list) {
-                  res.type('jpeg');
-
-                  list.forEach(buffer => {
-                    res.write(buffer);
-                  });
-
-                  return res.end();
-                }
-
-                res.status(404).send(_('pipe2jpeg.error.jpeg_image_not_found', { basePath: this.basePath }));
+              data => {
+                return { payload: data.list, totalLength: data.totalLength };
               },
-              (req, res) => {
-                const { list, totalLength } = this.pipe2jpeg;
-
-                if (list) {
-                  res.set('Content-Type', 'multipart/x-mixed-replace;boundary=pipe2jpeg');
-
-                  // res.write('--pipe2jpeg\r\n');
-
-                  res.write(`Content-Type: image/jpeg\r\nContent-Length: ${totalLength}\r\n\r\n`);
-
-                  list.forEach(buffer => {
-                    res.write(buffer);
-                  });
-
-                  res.write('\r\n--pipe2jpeg\r\n');
-
-                  this.resWaitingForMjpeg.add(res);
-
-                  return res.once('close', () => {
-                    this.resWaitingForMjpeg instanceof Set && this.resWaitingForMjpeg.delete(res);
-
-                    res.end();
-                  });
-                }
-
-                return res.status(404).send(_('pipe2jpeg.error.mjpeg_video_not_found', { basePath: this.basePath }));
+              (res, payload) => {
+                payload.forEach(buffer => {
+                  res.write(buffer);
+                });
               },
             ];
           }
         })();
+
+        const getImage = (req, res) => {
+          res.type('jpeg');
+
+          const { payload } = getPayload(this.pipe2jpeg);
+
+          writePayload(res, payload);
+
+          res.end();
+        };
+
+        const getVideo = (req, res) => {
+          const { payload, totalLength } = getPayload(this.pipe2jpeg);
+
+          res.set('Content-Type', 'multipart/x-mixed-replace;boundary=pipe2jpeg');
+
+          res.write(`Content-Type: image/jpeg\r\nContent-Length: ${totalLength}\r\n\r\n`);
+
+          writePayload(res, payload);
+
+          res.write('\r\n--pipe2jpeg\r\n');
+
+          this.resWaitingForMjpeg.add(res);
+
+          return res.once('close', () => {
+            this.resWaitingForMjpeg instanceof Set && this.resWaitingForMjpeg.delete(res);
+
+            res.end();
+          });
+        };
+
+        this.pipe2jpeg.on('data', data => {
+          if (this.resWaitingForMjpeg && this.resWaitingForMjpeg.size > 0) {
+            const { payload, totalLength } = getPayload(data);
+
+            this.resWaitingForMjpeg.forEach(res => {
+              if (res.writableEnded === false || res.finished === false) {
+                res.write(`Content-Type: image/jpeg\r\nContent-Length: ${totalLength}\r\n\r\n`);
+
+                writePayload(res, payload);
+
+                res.write('\r\n--pipe2jpeg\r\n');
+              }
+            });
+          }
+        });
 
         httpRouter.get('/image.jpeg', getImage);
 
@@ -417,7 +371,7 @@ module.exports = RED => {
     }
 
     reset() {
-      this.pipe2jpeg.resetCacheEmit();
+      this.pipe2jpeg.resetCache();
     }
 
     destroy() {
@@ -497,10 +451,16 @@ module.exports = RED => {
   registerType(Pipe2jpegNode.type, Pipe2jpegNode);
 };
 
-Pipe2jpeg.prototype.resetCacheEmit = function () {
+Pipe2jpeg.prototype.resetCache = function () {
   this.emit('reset');
-
-  this.resetCache();
+  this._buffers = [];
+  this._size = 0;
+  this._markerSplit = false;
+  this._findStart = true;
+  delete this._totalLength;
+  delete this._list;
+  delete this._jpeg;
+  delete this._timestamp;
 };
 
 Pipe2jpeg.prototype.toJSON = function () {
@@ -514,8 +474,6 @@ Pipe2jpeg.prototype.toJSON = function () {
 
 Pipe2jpeg.prototype._sendJpegBufferObject = function () {
   this._jpeg = this._buffers.length > 1 ? Buffer.concat(this._buffers, this._size) : this._buffers[0];
-
   this._totalLength = this._size;
-
   this.emit('data', { jpeg: this._jpeg, totalLength: this._totalLength });
 };
