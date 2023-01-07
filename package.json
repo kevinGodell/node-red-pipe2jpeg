@@ -16,6 +16,7 @@
     "url": "git+https://github.com/kevinGodell/node-red-pipe2jpeg.git"
   },
   "keywords": [
+    "node-red",
     "buffer",
     "jpeg",
     "mjpeg",
