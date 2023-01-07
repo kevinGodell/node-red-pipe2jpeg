@@ -45,7 +45,7 @@
     }
   },
   "dependencies": {
-    "pipe2jpeg": "^0.4.0"
+    "pipe2jpeg": "github:kevinGodell/pipe2jpeg#dev"
   },
   "files": [
     "pipe2jpeg.html",

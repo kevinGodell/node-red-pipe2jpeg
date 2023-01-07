@@ -399,7 +399,7 @@ module.exports = RED => {
     }
 
     handleMsg(msg) {
-      const { payload, action } = msg;
+      const { payload } = msg;
 
       if (Buffer.isBuffer(payload)) {
         if (payload.length) {
@@ -418,8 +418,6 @@ module.exports = RED => {
       // current method for resetting cache, grab exit code or signal from exec
       if (typeof code !== 'undefined' || typeof signal !== 'undefined') {
         this.reset();
-
-        return;
       }
     }
 
@@ -451,18 +449,6 @@ module.exports = RED => {
   registerType(Pipe2jpegNode.type, Pipe2jpegNode);
 };
 
-Pipe2jpeg.prototype.resetCache = function () {
-  this.emit('reset');
-  this._buffers = [];
-  this._size = 0;
-  this._markerSplit = false;
-  this._findStart = true;
-  delete this._totalLength;
-  delete this._list;
-  delete this._jpeg;
-  delete this._timestamp;
-};
-
 Pipe2jpeg.prototype.toJSON = function () {
   return {
     jpeg: this.jpeg,
@@ -470,10 +456,4 @@ Pipe2jpeg.prototype.toJSON = function () {
     totalLength: this.totalLength,
     timestamp: this.timestamp,
   };
-};
-
-Pipe2jpeg.prototype._sendJpegBufferObject = function () {
-  this._jpeg = this._buffers.length > 1 ? Buffer.concat(this._buffers, this._size) : this._buffers[0];
-  this._totalLength = this._size;
-  this.emit('data', { jpeg: this._jpeg, totalLength: this._totalLength });
 };
