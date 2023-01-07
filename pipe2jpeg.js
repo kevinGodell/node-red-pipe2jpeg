@@ -112,17 +112,7 @@ module.exports = RED => {
 
       const topic = this.topic.buffer;
 
-      const getPayload = (() => {
-        if (this.bufferType === 'concat') {
-          return data => {
-            return { payload: data.jpeg, totalLength: data.totalLength };
-          };
-        } else {
-          return data => {
-            return { payload: data.list, totalLength: data.totalLength };
-          };
-        }
-      })();
+      const getPayload = this.bufferType === 'concat' ? Pipe2jpegNode.getPayloadAsJpeg : Pipe2jpegNode.getPayloadAsList;
 
       this.pipe2jpeg.on('data', data => {
         const { payload, totalLength } = getPayload(data);
@@ -250,29 +240,8 @@ module.exports = RED => {
           return res.status(404).send(_('pipe2jpeg.error.jpeg_data_not_found', { basePath: this.basePath }));
         });
 
-        const [getPayload, writePayload] = (() => {
-          if (this.bufferType === 'concat') {
-            return [
-              data => {
-                return { payload: data.jpeg, totalLength: data.totalLength };
-              },
-              (res, payload) => {
-                res.write(payload);
-              },
-            ];
-          } else {
-            return [
-              data => {
-                return { payload: data.list, totalLength: data.totalLength };
-              },
-              (res, payload) => {
-                payload.forEach(buffer => {
-                  res.write(buffer);
-                });
-              },
-            ];
-          }
-        })();
+        const [getPayload, writePayload] =
+          this.bufferType === 'concat' ? [Pipe2jpegNode.getPayloadAsJpeg, Pipe2jpegNode.writePayloadAsJpeg] : [Pipe2jpegNode.getPayloadAsList, Pipe2jpegNode.writePayloadAsList];
 
         const getImage = (req, res) => {
           res.type('jpeg');
@@ -431,6 +400,24 @@ module.exports = RED => {
       }
 
       done();
+    }
+
+    static getPayloadAsJpeg(data) {
+      return { payload: data.jpeg, totalLength: data.totalLength };
+    }
+
+    static getPayloadAsList(data) {
+      return { payload: data.list, totalLength: data.totalLength };
+    }
+
+    static writePayloadAsJpeg(res, payload) {
+      res.write(payload);
+    }
+
+    static writePayloadAsList(res, payload) {
+      payload.forEach(buffer => {
+        res.write(buffer);
+      });
     }
   }
 
