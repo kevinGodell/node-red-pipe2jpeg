@@ -1,6 +1,6 @@
 {
   "name": "@kevingodell/node-red-pipe2jpeg",
-  "version": "0.1.1-beta.0",
+  "version": "0.1.1-beta.1",
   "description": "Parse a jpeg from a buffer and send it to a downstream node or serve it via http.",
   "main": "pipe2jpeg.js",
   "scripts": {
