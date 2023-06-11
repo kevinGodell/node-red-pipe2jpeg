@@ -32,10 +32,10 @@
   },
   "homepage": "https://github.com/kevinGodell/node-red-pipe2jpeg#readme",
   "devDependencies": {
-    "eslint": "^8.30.0",
-    "eslint-config-prettier": "^8.5.0",
+    "eslint": "^8.42.0",
+    "eslint-config-prettier": "^8.8.0",
     "eslint-plugin-prettier": "^4.2.1",
-    "prettier": "^2.8.1"
+    "prettier": "^2.8.8"
   },
   "peerDependencies": {
     "express": ">=4"
@@ -46,7 +46,7 @@
     }
   },
   "dependencies": {
-    "pipe2jpeg": "^0.4.1"
+    "pipe2jpeg": "github:kevingodell/pipe2jpeg#dev"
   },
   "files": [
     "pipe2jpeg.html",
