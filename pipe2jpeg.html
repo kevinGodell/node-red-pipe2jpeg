@@ -1,4 +1,9 @@
 <script type="text/javascript">
+  // define magic numbers
+  const PIPE2JPEG = {
+    bufferPool: { def: 0, min: 0, max: 1 },
+  };
+
   RED.nodes.registerType('pipe2jpeg', {
     align: 'left',
     category: 'cctv',
@@ -15,6 +20,15 @@
         required: true,
         validate: function (serveHttp) {
           return ['true', 'false'].includes(serveHttp);
+        },
+      },
+      bufferPool: {
+        value: PIPE2JPEG.bufferPool.def,
+        required: true,
+        validate: function (bufferPool) {
+          const int = Number.parseInt(bufferPool);
+
+          return int >= PIPE2JPEG.bufferPool.min && int <= PIPE2JPEG.bufferPool.max;
         },
       },
       bufferType: {
@@ -55,6 +69,12 @@
     },
     outputs: 2,
     oneditprepare: function () {
+      const getIntFromVal = (val, def, min, max) => {
+        const int = Number.parseInt(val);
+
+        return Number.isNaN(int) ? [def, true] : int < min ? [min, true] : int > max ? [max, true] : [int, false];
+      };
+
       const basePath = $('#node-input-basePath');
 
       basePath.prop('placeholder', this.id);
@@ -72,6 +92,21 @@
       }
 
       const serveHttp = $('#node-input-serveHttp').typedInput({ type: 'bool', types: ['bool'] });
+
+      const bufferPoolDef = this._def.defaults.bufferPool.value;
+
+      const bufferPool = $('#node-input-bufferPool')
+        .spinner({
+          min: PIPE2JPEG.bufferPool.min,
+          max: PIPE2JPEG.bufferPool.max,
+          step: 1,
+          change: (event, ui) => {
+            const [int, changed] = getIntFromVal(bufferPool.val(), bufferPoolDef, PIPE2JPEG.bufferPool.min, PIPE2JPEG.bufferPool.max);
+
+            changed ? bufferPool.val(int).change() : bufferPool.val(int);
+          },
+        })
+        .prop('placeholder', bufferPoolDef);
 
       const bufferType = $('#node-input-bufferType').typedInput({
         type: 'str',
@@ -131,13 +166,21 @@
   </fieldset>
 
   <fieldset>
-    <legend>Buffer Output</legend>
+    <legend>Buffered Jpegs</legend>
 
     <p class="form-tips">Output jpeg as concatenated buffer or array of buffers.</p>
 
     <div class="form-row">
-      <label for="node-input-bufferType"><i class="fa fa-gears"></i> Buffer Type</label>
+      <label for="node-input-bufferType"><i class="fa fa-gears"></i> Type</label>
       <input id="node-input-bufferType" />
+    </div>
+
+    <p class="form-tips">Reuse buffers to reduce garbage collection (experimental).</p>
+
+    <div class="form-row">
+      <label for="node-input-bufferPool"><i class="fa fa-list-ol"></i> Pool</label>
+      <input style="width: auto; max-width: 130px; text-align:right; padding-right: 12px" id="node-input-bufferPool" />
+      <label for="node-input-bufferPool">length</label>
     </div>
   </fieldset>
 </script>

@@ -27,6 +27,8 @@ module.exports = RED => {
 
       this.bufferType = ['array', 'concat'].includes(config.bufferType) ? config.bufferType : 'array';
 
+      this.bufferPool = Pipe2jpegNode.validateInt(config.bufferPool, 0, 0, 1);
+
       this.playlist = '';
 
       this.displayedStatus = { http: 'off', fill: 'yellow' };
@@ -82,7 +84,7 @@ module.exports = RED => {
     }
 
     createPipe2jpeg() {
-      const pipe2jpegConfig = { readableObjectMode: true, bufferConcat: this.bufferType === 'concat' };
+      const pipe2jpegConfig = { readableObjectMode: true, bufferConcat: this.bufferType === 'concat', pool: this.bufferPool };
 
       this.pipe2jpeg = new Pipe2jpeg(pipe2jpegConfig);
 
@@ -121,7 +123,7 @@ module.exports = RED => {
       });
 
       this.pipe2jpeg.on('error', error => {
-        this.pipe2jpeg.resetCache();
+        this.pipe2jpeg.reset();
 
         this.error(error);
 
@@ -162,7 +164,7 @@ module.exports = RED => {
 
       this.pipe2jpeg.removeAllListeners('reset');
 
-      this.pipe2jpeg.resetCache();
+      this.pipe2jpeg.reset();
 
       this.pipe2jpeg = undefined;
     }
@@ -244,33 +246,41 @@ module.exports = RED => {
           this.bufferType === 'concat' ? [Pipe2jpegNode.getPayloadAsJpeg, Pipe2jpegNode.writePayloadAsJpeg] : [Pipe2jpegNode.getPayloadAsList, Pipe2jpegNode.writePayloadAsList];
 
         const getImage = (req, res) => {
-          res.type('jpeg');
-
           const { payload } = getPayload(this.pipe2jpeg);
 
-          writePayload(res, payload);
+          if (payload) {
+            res.type('jpeg');
 
-          res.end();
+            writePayload(res, payload);
+
+            return res.end();
+          }
+
+          return res.status(404).send(_('pipe2jpeg.error.jpeg_not_found', { basePath: this.basePath }));
         };
 
         const getVideo = (req, res) => {
           const { payload, totalLength } = getPayload(this.pipe2jpeg);
 
-          res.set('Content-Type', 'multipart/x-mixed-replace;boundary=pipe2jpeg');
+          if (payload) {
+            res.set('Content-Type', 'multipart/x-mixed-replace;boundary=pipe2jpeg');
 
-          res.write(`Content-Type: image/jpeg\r\nContent-Length: ${totalLength}\r\n\r\n`);
+            res.write(`Content-Type: image/jpeg\r\nContent-Length: ${totalLength}\r\n\r\n`);
 
-          writePayload(res, payload);
+            writePayload(res, payload);
 
-          res.write('\r\n--pipe2jpeg\r\n');
+            res.write('\r\n--pipe2jpeg\r\n');
 
-          this.resWaitingForMjpeg.add(res);
+            this.resWaitingForMjpeg.add(res);
 
-          return res.once('close', () => {
-            this.resWaitingForMjpeg instanceof Set && this.resWaitingForMjpeg.delete(res);
+            return res.once('close', () => {
+              this.resWaitingForMjpeg instanceof Set && this.resWaitingForMjpeg.delete(res);
 
-            res.end();
-          });
+              res.end();
+            });
+          }
+
+          return res.status(404).send(_('pipe2jpeg.error.mjpeg_not_found', { basePath: this.basePath }));
         };
 
         this.pipe2jpeg.on('data', data => {
@@ -340,7 +350,7 @@ module.exports = RED => {
     }
 
     reset() {
-      this.pipe2jpeg.resetCache();
+      this.pipe2jpeg.reset();
     }
 
     destroy() {
@@ -419,6 +429,12 @@ module.exports = RED => {
         res.write(buffer);
       });
     }
+
+    static validateInt(val, def, min, max) {
+      const int = Number.parseInt(val);
+
+      return Number.isNaN(int) ? def : int < min ? min : int > max ? max : int;
+    }
   }
 
   Pipe2jpegNode.xPoweredBy = `${xPoweredByName}@${xPoweredByVersion}`;
@@ -434,13 +450,4 @@ module.exports = RED => {
   Pipe2jpegNode.type = 'pipe2jpeg';
 
   registerType(Pipe2jpegNode.type, Pipe2jpegNode);
-};
-
-Pipe2jpeg.prototype.toJSON = function () {
-  return {
-    jpeg: this.jpeg,
-    list: this.list,
-    totalLength: this.totalLength,
-    timestamp: this.timestamp,
-  };
 };
