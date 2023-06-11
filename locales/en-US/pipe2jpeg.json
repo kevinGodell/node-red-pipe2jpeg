@@ -11,7 +11,9 @@
     "error": {
       "base_path_invalid": "basePath \"__basePath__\" is invalid",
       "base_path_duplicate": "basePath \"__basePath__\" is already in use",
-      "jpeg_data_not_found": "jpeg data not found for \"__basePath__\""
+      "jpeg_data_not_found": "jpeg data not found for \"__basePath__\"",
+      "jpeg_not_found": "jpeg not found for \"__basePath__\"",
+      "mjpeg_not_found": "mjpeg not found for \"__basePath__\""
     }
   }
 }
