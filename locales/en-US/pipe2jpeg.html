@@ -67,7 +67,7 @@
 {
   topic: '/pipe2jpeg/office_sub/buffer/array',
   retain: false,
-  payload: [buffer[65536], buffer[24686]]
+  payload: [[buffer[65536], buffer[24686]]
   totalSize: 90222
 }
               </code></pre>
@@ -95,14 +95,22 @@
       </ul>
     </li>
     <li>
-      <h4>Buffer Output</h4>
+      <h4>Buffered Jpegs</h4>
       <ul>
         <li>
-          <h5>Buffer Type</h5>
+          <h5>Type</h5>
           <ul>
             <li>concat or array</li>
             <li>concat causes array of buffers to be concatenated to a single buffer</li>
             <li>array prevents concatenation and uses less resources</li>
+          </ul>
+        </li>
+        <li>
+          <h5>Pool</h5>
+          <ul>
+            <li>reuse buffers to reduce garbage collection</li>
+            <li>can only be used if buffer type set to concat</li>
+            <li>experimental</li>
           </ul>
         </li>
       </ul>
